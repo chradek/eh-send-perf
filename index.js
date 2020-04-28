@@ -7,6 +7,7 @@ const connectionString = process.env["connection_string"];
 const batchSize = parseInt(process.env["batch_size"], 10) || 950;
 const runTimeInMinutes = parseInt(process.env["run_time"], 10) || 10;
 const numberOfClients = parseInt(process.env["num_clients"], 10) || 1;
+const messageSize = parseInt(process.env["msg_size"], 10) || 1024;
 
 // Create runningAverages for things we want to measure over time.
 const sendEventsRunningAverage = runningAverage("Average send time in ms");
@@ -96,7 +97,7 @@ async function createAndFillBatch(client) {
   const batch = await client.createBatch();
 
   for (let i = 0; i < batchSize; i++) {
-    const event = generateEvent();
+    const event = generateEvent(messageSize);
     if (!batch.tryAdd(event)) {
       console.error(`Failed to add event ${i}`);
       break;
