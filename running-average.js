@@ -40,7 +40,7 @@ function runningAverage(title) {
           break;
       }
 
-      console.log(`${title}: ${data.currentTotal} over a duration of ${reportedDelta.toFixed(2)} ${denomination}`);
+      console.log(`${title}: ${data.currentTotal} over a duration of ${reportedDelta.toFixed(2)} ${denomination} (${data.currentTotal / reportedDelta}/${denomination})`);
     },
     start() {
       startTime = Date.now();
