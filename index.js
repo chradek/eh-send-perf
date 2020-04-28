@@ -4,7 +4,7 @@ const {generateEvent} = require("./generate-event");
 
 // Configure the run via environment variables.
 const connectionString = process.env["connection_string"];
-const batchSize = parseInt(process.env["batch_size"], 10) || 11000;
+const batchSize = parseInt(process.env["batch_size"], 10) || 950;
 const runTimeInMinutes = parseInt(process.env["run_time"], 10) || 10;
 const numberOfClients = parseInt(process.env["num_clients"], 10) || 1;
 

@@ -1,6 +1,8 @@
 function generateEvent() {
+  const buf = Buffer.alloc(1024);
+  buf.fill(new Date().toISOString());
   return {
-    body: `[${new Date().toISOString()}] This is a simple test`
+    body: buf.toString()
   };
 }
 
