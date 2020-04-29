@@ -1,6 +1,7 @@
 const {EventHubProducerClient} = require("@azure/event-hubs");
 const {runningAverage} = require("./running-average");
 const {generateEvent} = require("./generate-event");
+const {race} = require("./throttle");
 
 // Configure the run via environment variables.
 const connectionString = process.env["connection_string"];
@@ -8,6 +9,7 @@ const batchSize = parseInt(process.env["batch_size"], 10) || 950;
 const runTimeInMinutes = parseInt(process.env["run_time"], 10) || 10;
 const numberOfClients = parseInt(process.env["num_clients"], 10) || 1;
 const messageSize = parseInt(process.env["msg_size"], 10) || 1024;
+const numConcurrentSends = parseInt(process.env["conc_sends"], 10) || 1;
 
 // Create runningAverages for things we want to measure over time.
 const sendEventsRunningAverage = runningAverage("Average send time in ms");
@@ -73,12 +75,14 @@ async function clientLoop(clientIndex, runningTime) {
   const startTime = Date.now();
   let currentTime = startTime;
   let invocationCount = 0;
+  const throttle = race(numConcurrentSends);
   while ((currentTime - startTime) < runningTime) {
-    await sendEvents(clientIndex, Boolean(invocationCount));
+    await throttle.add(sendEvents(clientIndex, Boolean(invocationCount)));
     invocationCount++;
     currentTime = Date.now();
     //console.log(`Sent events from client ${clientIndex}`)
   }
+  await throttle.waitForAll();
   clientSentMessagesCount.stop();
   await clients[clientIndex].close();
 }
