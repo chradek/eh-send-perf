@@ -12,8 +12,6 @@ const messageSize = parseInt(process.env["msg_size"], 10) || 1024;
 const numConcurrentSends = parseInt(process.env["conc_sends"], 10) || 1;
 
 // Create runningAverages for things we want to measure over time.
-const sendEventsRunningAverage = runningAverage("Average send time in ms");
-const sendEventsRate = runningAverage("Average events sent per second");
 const totalSentMessageCount = runningAverage("Total messages sent during run");
 const clientsSentMessagesCount = [];
 
@@ -23,8 +21,8 @@ function createLogger(intervalInMs) {
   totalSentMessageCount.start();
 
   function printRates() {
-    sendEventsRunningAverage.print();
-    sendEventsRate.print();
+    totalSentMessageCount.stop();
+      totalSentMessageCount.printTotalOverTime("seconds");
   }
 
   const tid = setInterval(printRates, intervalInMs);
@@ -61,7 +59,6 @@ async function run() {
 
   for (let i = 0; i < clients.length; i++) {
     loops.push(clientLoop(i, runningTime));
-    //await new Promise(r => setTimeout(r, 1000));
   }
 
   await Promise.all(loops);
@@ -74,13 +71,10 @@ async function clientLoop(clientIndex, runningTime) {
   clientSentMessagesCount.start();
   const startTime = Date.now();
   let currentTime = startTime;
-  let invocationCount = 0;
   const throttle = race(numConcurrentSends);
   while ((currentTime - startTime) < runningTime) {
-    await throttle.add(sendEvents(clientIndex, Boolean(invocationCount)));
-    invocationCount++;
+    await throttle.add(sendEvents(clientIndex));
     currentTime = Date.now();
-    //console.log(`Sent events from client ${clientIndex}`)
   }
   await throttle.waitForAll();
   clientSentMessagesCount.stop();
@@ -117,18 +111,10 @@ async function createAndFillBatch(client) {
  * @param {*} batch 
  * @param {boolean} recordRate 
  */
-async function sendEvents(clientIndex, recordRate) {
+async function sendEvents(clientIndex) {
   const client = clients[clientIndex];
-  const startTime = Date.now();
   try {
     await client.sendBatch(batch);
-    const endTime = Date.now();
-    const delta = endTime - startTime;
-    if (recordRate) {
-      // events/ms
-      sendEventsRunningAverage.add(delta);
-      sendEventsRate.add((batch.count * 1000) / delta);
-    }
     totalSentMessageCount.add(batch.count);
     clientsSentMessagesCount[clientIndex].add(batch.count);
   } catch (err) {
