@@ -22,7 +22,7 @@ function createLogger(intervalInMs) {
 
   function printRates() {
     totalSentMessageCount.stop();
-      totalSentMessageCount.printTotalOverTime("seconds");
+    totalSentMessageCount.printTotalOverTime("seconds");
   }
 
   const tid = setInterval(printRates, intervalInMs);
@@ -42,7 +42,6 @@ function createLogger(intervalInMs) {
 }
 
 const clients = [];
-let batch;
 
 // create clients and rates
 for (let i = 0; i < numberOfClients; i++) {
@@ -53,7 +52,6 @@ for (let i = 0; i < numberOfClients; i++) {
 async function run() {
   const runningTime = 60000 * runTimeInMinutes;
 
-  await populateBatch();
   const logger = createLogger(20000);
   const loops = [];
 
@@ -81,12 +79,6 @@ async function clientLoop(clientIndex, runningTime) {
   await clients[clientIndex].close();
 }
 
-async function populateBatch() {
-  console.log("Creating batch.");
-  batch = await createAndFillBatch(clients[0])
-  console.log('Batch created.');
-}
-
 /**
  * Creates and fills an EventDataBatch using the provided EventHubProducerClient.
  * @param {EventHubProducerClient} client 
@@ -108,11 +100,10 @@ async function createAndFillBatch(client) {
 /**
  * 
  * @param {number} clientIndex
- * @param {*} batch 
- * @param {boolean} recordRate 
  */
 async function sendEvents(clientIndex) {
   const client = clients[clientIndex];
+  const batch = await createAndFillBatch(client);
   try {
     await client.sendBatch(batch);
     totalSentMessageCount.add(batch.count);

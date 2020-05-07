@@ -29,18 +29,21 @@ function runningAverage(title) {
 
       const delta = endTime - startTime;
       let reportedDelta = delta;
+      let denominator = "ms";
       switch (denomination) {
         case "seconds":
           reportedDelta = delta / 1000;
+          denominator = "second";
           break;
         case "minutes":
           reportedDelta = delta / 60000;
+          denominator = "minute"
           break;
         default:
           break;
       }
 
-      console.log(`${title}: ${data.currentTotal} over a duration of ${reportedDelta.toFixed(2)} ${denomination} (${data.currentTotal / reportedDelta}/${denomination})`);
+      console.log(`${title}: ${data.currentTotal} over a duration of ${reportedDelta.toFixed(2)} ${denomination} (${data.currentTotal / reportedDelta}/${denominator})`);
     },
     start() {
       startTime = Date.now();
